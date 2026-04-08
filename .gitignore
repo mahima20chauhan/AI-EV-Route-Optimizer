@@ -1,0 +1,17 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+
+# Node
+node_modules/
+
+# ML Models
+*.pth
+*.pkl
+
+# Env
+.env
+
+# OS
+.DS_Store
