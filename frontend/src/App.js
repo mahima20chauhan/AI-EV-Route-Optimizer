@@ -17,12 +17,12 @@ let DefaultIcon = L.icon({
 
 L.Marker.prototype.options.icon = DefaultIcon;
 
-const API_BASE_URL = 'http://127.0.0.1:8000';
+const API_BASE_URL = 'http://localhost:8000';
 
 function App() {
 
   const [startCoords, setStartCoords] = useState({ lat: 28.6139, lon: 77.2090 });
-  const [destCoords, setDestCoords] = useState({ lat: 28.6500, lon: 77.2500 });
+  const [destCoords, setDestCoords] = useState({ lat: 28.4595, lon: 77.0266 });
   const [routeData, setRouteData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -37,38 +37,35 @@ function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           start: startCoords,
-          destination: destCoords,
-          vehicle: {
-            battery_capacity: 60,
-            efficiency: 0.2,
-            current_charge: 100
-          },
-          objective: "balanced",
-          algorithm: "a_star",
-          consider_traffic: true,
-          weather: 0
+          destination: destCoords
         })
       });
 
       if (!res.ok) throw new Error(res.status);
+
       const data = await res.json();
-      setRouteData(data);
+
+      // ✅ DIRECTLY USE BACKEND WAYPOINTS (NO RANDOM FAKE PATH)
+      const cleanPath = data.waypoints.map(wp => [wp.lat, wp.lon]);
+
+      setRouteData({
+        ...data,
+        routePath: cleanPath
+      });
 
     } catch (err) {
+      console.error(err);
       setError("⚠ Failed to fetch route");
     }
 
     setLoading(false);
   };
 
-  const routePath = routeData
-    ? routeData.waypoints.map(wp => [wp.lat, wp.lon])
-    : [];
+  const routePath = routeData ? routeData.routePath : [];
 
   return (
     <div className="App">
 
-      {/* HEADER */}
       <div className="header">
         <h1>🚗 EV Route Optimizer</h1>
         <p>Smart navigation with AI + traffic prediction</p>
@@ -115,12 +112,11 @@ function App() {
 
           {error && <div className="error">{error}</div>}
 
-          {/* RESULT QUICK STATS */}
           {routeData && (
             <div className="mini-stats">
-              <p>📏 {routeData.total_distance.toFixed(2)} km</p>
-              <p>⏱ {(routeData.total_time * 60).toFixed(1)} min</p>
-              <p>⚡ {routeData.total_energy.toFixed(2)} kWh</p>
+              <p>📏 {routeData.total_distance?.toFixed(2)} km</p>
+              <p>⏱ {(routeData.total_time * 60)?.toFixed(1)} min</p>
+              <p>⚡ {routeData.total_energy?.toFixed(2)} kWh</p>
             </div>
           )}
 
